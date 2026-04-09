@@ -1,3 +1,6 @@
+/* 10X Health Brand Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -7,9 +10,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-sans: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'Inter', monospace;
+  --font-heading: 'Oswald', 'Arial Narrow', sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -39,6 +42,13 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-tenx-red: #D1242A;
+  --color-tenx-cherry: #953029;
+  --color-tenx-cream: #FAF8F1;
+  --color-tenx-charcoal: #3B3B3A;
+  --color-tenx-taupe: #C2B0A5;
+  --color-tenx-brown: #332824;
+  --color-tenx-gray: #BFBFBD;
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -48,83 +58,69 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* 10X Brand CSS custom properties */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --10x-color-red: #D1242A;
+  --10x-color-cherry: #953029;
+  --10x-color-cream: #FAF8F1;
+  --10x-color-charcoal: #3B3B3A;
+  --10x-color-taupe: #C2B0A5;
+  --10x-color-brown: #332824;
+  --10x-color-gray: #BFBFBD;
+  --10x-btn-radius: 10px;
 }
 
 @layer base {
+  :root {
+    --background: #FFFFFF !important;
+    --foreground: #000000 !important;
+    --card: #FAF8F1 !important;
+    --card-foreground: #000000 !important;
+    --muted: #F5F5F4 !important;
+    --muted-foreground: #3B3B3A !important;
+    --border: rgba(0, 0, 0, 0.08) !important;
+    --input: rgba(0, 0, 0, 0.06) !important;
+    --primary: #D1242A !important;
+    --primary-foreground: #FFFFFF !important;
+    --secondary: #F5F5F4 !important;
+    --secondary-foreground: #000000 !important;
+    --accent: #D1242A !important;
+    --accent-foreground: #FFFFFF !important;
+    --ring: #D1242A !important;
+  }
   * {
     @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
   }
   html {
     @apply font-sans;
+  }
+
+  /* 10X Brand heading styles */
+  .tenx-heading {
+    font-family: 'Oswald', 'Arial Narrow', sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    line-height: 1.15;
+  }
+
+  /* Red accent line under headings */
+  .tenx-accent-line {
+    width: 80px;
+    height: 3px;
+    background-color: #D1242A;
+    border: none;
+    margin-top: 8px;
+    margin-bottom: 16px;
+    border-radius: 2px;
+  }
+
+  /* Red X in "10X" */
+  .tenx-brand-x {
+    color: #D1242A;
   }
 }
