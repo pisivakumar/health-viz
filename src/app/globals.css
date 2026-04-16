@@ -124,3 +124,30 @@
     color: #D1242A;
   }
 }
+
+/* ── Twin Dark Theme (scoped to /twin route) ────────────────── */
+
+.twin-dark {
+  --tw-bg-opacity: 1;
+  background-color: #0a0a0a;
+  color: #ffffff;
+  min-height: 100vh;
+
+  /* CSS custom properties for twin dark theme */
+  --twin-bg: #0a0a0a;
+  --twin-card: #111111;
+  --twin-elevated: #1a1a1a;
+  --twin-text: #ffffff;
+  --twin-text-secondary: #cccccc;
+  --twin-text-muted: #888888;
+  --twin-text-subtle: #555555;
+  --twin-border-subtle: #1a1a1a;
+  --twin-border: #333333;
+  --twin-accent: #D1242A;
+  --twin-agent-bubble: rgba(255, 255, 255, 0.05);
+  --twin-user-bubble: rgba(209, 36, 42, 0.15);
+}
+
+.twin-dark * {
+  border-color: var(--twin-border-subtle);
+}

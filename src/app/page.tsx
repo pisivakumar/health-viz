@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import { sampleBloodLab, sampleGenetic, sampleMitoScreen } from "@/lib/sample-data";
@@ -9,9 +9,15 @@ import InfoTip from "@/components/InfoTip";
 import HealthStory from "@/components/HealthStory";
 import SupplementCart from "@/components/SupplementCart";
 import ConciergeModal from "@/components/ConciergeModal";
+import AgentPanel from "@/components/twin/AgentPanel";
+import AgentBubble from "@/components/twin/AgentBubble";
+import TwinCard from "@/components/twin/TwinCard";
 import { generateBloodLabNarrative, generateGeneticNarrative, generateMitoNarrative } from "@/lib/narrative";
 import MitoGauge from "@/components/MitoGauge";
+import { SCENARIOS } from "@/lib/health-agent/types";
+import { simulate, applyDelta } from "@/lib/health-agent/simulation-rules";
 import type { CartItem } from "@/lib/types";
+import type { UserProfile, DerivedMetrics, TraitChip, AgentMessage, ScenarioId, SimulationResult } from "@/lib/health-agent/types";
 
 // These use browser APIs, so must be client-only
 const RadarFingerprint = dynamic(
@@ -105,9 +111,90 @@ const overallOptimal = sampleBloodLab.systems.filter((s) => s.overallStatus === 
 export default function Home() {
   const [tab, setTab] = useState<Tab>("overview");
   const [highlightedSystem, setHighlightedSystem] = useState<string | null>(null);
+  const bodySystemsRef = useRef<HTMLElement>(null);
   const [cartItems, setCartItems] = useState<CartItem[] | null>(null);
   const [conciergeOpen, setConciergeOpen] = useState(false);
   const [conciergeContext, setConciergeContext] = useState<string | undefined>();
+
+  // ── Health Twin state ──
+  const [twinProfile, setTwinProfile] = useState<UserProfile | null>(null);
+  const [twinMetrics, setTwinMetrics] = useState<DerivedMetrics | null>(null);
+  const [twinTraits, setTwinTraits] = useState<TraitChip[]>([]);
+  const [twinMessages, setTwinMessages] = useState<AgentMessage[]>([]);
+  const [twinInited, setTwinInited] = useState(false);
+  const [agentOpen, setAgentOpen] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [selectedScenario, setSelectedScenario] = useState<ScenarioId | null>(null);
+  const [simResult, setSimResult] = useState<SimulationResult | null>(null);
+
+  // Init twin when switching to 3D Body tab
+  useEffect(() => {
+    if (tab !== "body3d" || twinInited) return;
+    async function init() {
+      try {
+        const res = await fetch("/api/agent/init", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reportData: [sampleBloodLab, sampleGenetic, sampleMitoScreen] }),
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        setTwinProfile(data.profile);
+        setTwinMetrics(data.metrics);
+        setTwinTraits(data.traits);
+        setTwinMessages([{ role: "assistant", content: data.greeting, actions: [], timestamp: Date.now() }]);
+        setTwinInited(true);
+      } catch (err) {
+        console.error("Twin init error:", err);
+      }
+    }
+    init();
+  }, [tab, twinInited]);
+
+  const handleSimulate = useCallback((scenario: ScenarioId) => {
+    if (!twinProfile || !twinMetrics) return;
+    setSelectedScenario(scenario);
+    setSimResult(simulate(scenario, twinProfile, twinMetrics));
+  }, [twinProfile, twinMetrics]);
+
+  const [customSimQuery, setCustomSimQuery] = useState("");
+  const [customSimLoading, setCustomSimLoading] = useState(false);
+
+  const handleCustomSimulate = useCallback(async () => {
+    const q = customSimQuery.trim();
+    if (!q || !twinProfile || !twinMetrics || customSimLoading) return;
+    setCustomSimLoading(true);
+    setSelectedScenario("custom");
+    setSimResult(null);
+    try {
+      const res = await fetch("/api/agent/simulate-custom", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: q, profile: twinProfile, metrics: twinMetrics, traits: twinTraits }),
+      });
+      if (!res.ok) throw new Error("Simulation failed");
+      const result = await res.json();
+      setSimResult(result);
+    } catch (err) {
+      console.error("Custom simulation error:", err);
+      setSimResult({
+        scenario: "custom",
+        delta: { energy_stability: 0, metabolic_balance: 0, stress_load: 0 },
+        confidence: "low",
+        explanation: "Sorry, I couldn't simulate that scenario. Try rephrasing your question.",
+        trait_changes: {},
+      });
+    } finally {
+      setCustomSimLoading(false);
+    }
+  }, [customSimQuery, twinProfile, twinMetrics, twinTraits, customSimLoading]);
+
+  const handleAddToCartFromAgent = useCallback((item: string) => {
+    setCartItems((prev) => [
+      ...(prev || []),
+      { systemName: "Health Agent", rec: { title: item, description: "Recommended by your Health Agent", type: "supplement" as const, impact: "medium" as const } },
+    ]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -126,6 +213,13 @@ export default function Home() {
                 <div className="text-2xl font-bold text-green-600 tabular-nums">{overallOptimal}/{sampleBloodLab.systems.length}</div>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider">systems optimal</p>
               </div>
+              <a
+                href="/knowledge"
+                className="text-[10px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+                title="Knowledge Base Admin"
+              >
+                Admin
+              </a>
               <button
                 onClick={() => { setConciergeContext(undefined); setConciergeOpen(true); }}
                 className="text-[10px] font-semibold uppercase tracking-wider px-3 py-2 rounded-[10px] bg-tenx-red text-white hover:opacity-90 transition-opacity leading-tight"
@@ -193,6 +287,7 @@ export default function Home() {
 
         {tab === "body3d" && (
           <div className="space-y-6">
+            {/* 3D Body */}
             <section>
               <h2 className="tenx-heading text-lg mb-1">INTERACTIVE BODY MAP</h2>
               <div className="tenx-accent-line" />
@@ -200,9 +295,107 @@ export default function Home() {
               <Body3D
                 systems={sampleBloodLab.systems}
                 onSystemSelect={(id) => {
-                  if (id) setHighlightedSystem(id);
+                  if (id) {
+                    setHighlightedSystem(id);
+                    setTimeout(() => {
+                      bodySystemsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }, 100);
+                  }
                 }}
               />
+            </section>
+
+            {/* Trait chips */}
+            {twinTraits.length > 0 && (
+              <section>
+                <h2 className="tenx-heading text-sm mb-2">YOUR HEALTH PROFILE</h2>
+                <TwinCard traits={twinTraits} />
+              </section>
+            )}
+
+            {/* Simulation */}
+            {twinProfile && twinMetrics && (
+              <section className="rounded-2xl border border-black/[0.06] bg-card/50 backdrop-blur-sm p-5 space-y-4">
+                <div>
+                  <h2 className="tenx-heading text-sm mb-1">WHAT IF YOU...</h2>
+                  <p className="text-xs text-muted-foreground">See how lifestyle changes could affect your scores</p>
+                </div>
+                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                  {SCENARIOS.map((s) => {
+                    const isSelected = selectedScenario === s.id;
+                    return (
+                      <button
+                        key={s.id}
+                        onClick={() => handleSimulate(s.id)}
+                        className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-[10px] text-xs font-medium transition-all border ${
+                          isSelected
+                            ? "bg-tenx-red/10 border-tenx-red/30 text-tenx-red"
+                            : "bg-black/[0.02] border-black/[0.06] text-muted-foreground hover:bg-black/[0.04]"
+                        }`}
+                      >
+                        <span>{s.icon}</span>
+                        {s.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Custom scenario input */}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={customSimQuery}
+                    onChange={(e) => setCustomSimQuery(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleCustomSimulate(); }}
+                    placeholder="Or describe your own... e.g. start running 3x per week"
+                    className="flex-1 px-3 py-2 rounded-[10px] text-xs bg-black/[0.02] border border-black/[0.06] outline-none text-foreground placeholder:text-muted-foreground/60 focus:border-tenx-red/30 transition-colors"
+                    disabled={customSimLoading}
+                  />
+                  <button
+                    onClick={handleCustomSimulate}
+                    disabled={!customSimQuery.trim() || customSimLoading}
+                    className="shrink-0 px-3 py-2 rounded-[10px] text-xs font-medium bg-tenx-red text-white transition-opacity disabled:opacity-40"
+                  >
+                    {customSimLoading ? "Thinking..." : "Simulate"}
+                  </button>
+                </div>
+
+                {simResult && (
+                  <div className="space-y-3">
+                    <div className="flex gap-3">
+                      <SimDeltaPill label="Energy" delta={simResult.delta.energy_stability} />
+                      <SimDeltaPill label="Metabolic" delta={simResult.delta.metabolic_balance} />
+                      <SimDeltaPill label="Stress" delta={simResult.delta.stress_load} isStress />
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{simResult.explanation}</p>
+                    {Object.keys(simResult.trait_changes).length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {Object.entries(simResult.trait_changes).map(([trait, newLevel]) => (
+                          <span key={trait} className="text-[10px] px-2 py-0.5 rounded-full bg-black/[0.04] text-muted-foreground">
+                            {trait.replace(/_/g, " ")} → {String(newLevel)}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full capitalize ${
+                        simResult.confidence === "high" ? "bg-green-500/10 text-green-700" : simResult.confidence === "medium" ? "bg-green-500/10 text-green-600" : "bg-yellow-500/10 text-yellow-700"
+                      }`}>
+                        {simResult.confidence} confidence
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </section>
+            )}
+
+            {/* Body systems with scores */}
+            <section ref={bodySystemsRef} className="space-y-3">
+              <h2 className="tenx-heading text-lg">BODY SYSTEMS</h2>
+              <div className="tenx-accent-line" />
+              {sortedSystems.map((s) => (
+                <SystemCard key={`${s.id}-${s.id === highlightedSystem ? "hl" : ""}`} system={s} defaultExpanded={s.id === highlightedSystem} />
+              ))}
             </section>
           </div>
         )}
@@ -212,7 +405,7 @@ export default function Home() {
             <h2 className="tenx-heading text-lg mb-1">BLOOD LAB RESULTS</h2>
             <div className="tenx-accent-line" />
             {sortedSystems.map((s) => (
-              <SystemCard key={s.id} system={s} defaultExpanded={s.id === highlightedSystem} />
+              <SystemCard key={`${s.id}-${s.id === highlightedSystem ? "hl" : ""}`} system={s} defaultExpanded={s.id === highlightedSystem} />
             ))}
           </div>
         )}
@@ -297,6 +490,44 @@ export default function Home() {
         onClose={() => setConciergeOpen(false)}
         context={conciergeContext}
       />
+
+      {/* Agent panel (available on 3D Body tab) */}
+      {tab === "body3d" && twinProfile && twinMetrics && (
+        <>
+          <AgentPanel
+            profile={twinProfile}
+            metrics={twinMetrics}
+            traits={twinTraits}
+            userName={sampleBloodLab.patient.name.split(" ")[0]}
+            messages={twinMessages}
+            onMessagesChange={setTwinMessages}
+            onHighlightTrait={(id) => setHighlightedSystem(id)}
+            onRunSimulation={handleSimulate}
+            onAddToCart={handleAddToCartFromAgent}
+            onOpenConcierge={() => { setConciergeContext("Health Agent"); setConciergeOpen(true); setAgentOpen(false); }}
+            voiceEnabled={voiceEnabled}
+            onVoiceToggle={() => setVoiceEnabled((v) => !v)}
+            isOpen={agentOpen}
+            onClose={() => setAgentOpen(false)}
+          />
+          {!agentOpen && <AgentBubble onClick={() => setAgentOpen(true)} />}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── Simulation delta pill ──
+
+function SimDeltaPill({ label, delta, isStress = false }: { label: string; delta: number; isStress?: boolean }) {
+  const isGood = isStress ? delta < 0 : delta > 0;
+  const colorClass = isGood ? "text-green-700" : delta === 0 ? "text-muted-foreground" : "text-tenx-red";
+  return (
+    <div className="flex-1 rounded-lg px-3 py-2 text-center bg-black/[0.02]">
+      <p className="text-[10px] text-muted-foreground">{label}</p>
+      <p className={`text-sm font-bold tabular-nums ${colorClass}`}>
+        {delta > 0 ? "+" : ""}{delta}
+      </p>
     </div>
   );
 }

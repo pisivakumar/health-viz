@@ -93,7 +93,11 @@ export default function ConciergeModal({ open, onClose, context }: Props) {
       <button
         onClick={() => method && setSubmitted(true)}
         disabled={!method}
-        className="w-full text-sm font-semibold uppercase tracking-wider py-3 rounded-[10px] bg-tenx-red text-white hover:opacity-90 disabled:opacity-30 transition-opacity"
+        className={`w-full text-sm font-semibold uppercase tracking-wider py-3 rounded-[10px] transition-opacity ${
+          method
+            ? "bg-tenx-red text-white hover:opacity-90"
+            : "bg-black/[0.08] text-muted-foreground cursor-not-allowed"
+        }`}
       >
         Connect me
       </button>
@@ -111,14 +115,15 @@ function Overlay({ children, onClose }: { children: React.ReactNode; onClose: ()
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm"
+      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm"
       onClick={onClose}
+      style={{ isolation: "isolate" }}
     >
       <motion.div
         initial={{ y: 40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 40, opacity: 0 }}
-        className="w-full max-w-md rounded-t-2xl sm:rounded-2xl border border-black/[0.06] bg-white shadow-2xl p-6"
+        className="w-full max-w-md rounded-t-2xl sm:rounded-2xl border border-black/[0.06] bg-white shadow-2xl p-6 relative z-[9999]"
         onClick={(e) => e.stopPropagation()}
       >
         {children}

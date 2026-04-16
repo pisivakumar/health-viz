@@ -1,0 +1,26 @@
+{
+  "trait_to_metric_value": {
+    "low": 30,
+    "moderate": 60,
+    "high": 85,
+    "poor": 30,
+    "average": 55,
+    "good": 85,
+    "slow": 30,
+    "fast": 85
+  },
+  "derived_metrics": {
+    "energy_stability": {
+      "label": "Energy Stability",
+      "formula": "weighted_composite(carb_tolerance: 0.4, caffeine_sensitivity_inv: 0.3, sleep_quality: 0.3)"
+    },
+    "metabolic_balance": {
+      "label": "Metabolic Balance",
+      "formula": "weighted_composite(fat_metabolism: 0.35, inflammation_inv: 0.35, recovery_rate: 0.3)"
+    },
+    "stress_load": {
+      "label": "Stress Load",
+      "formula": "weighted_composite(cortisol_based: 0.4, inflammation: 0.3, sleep_quality_inv: 0.3)"
+    }
+  }
+}

@@ -39,6 +39,15 @@ interface OrganConfig {
 
 const ORGAN_CONFIGS: OrganConfig[] = [
   {
+    systemId: "hormones",
+    organName: "Brain",
+    models: ["/models/brain.glb"],
+    labelPosition: [0.0, 0.72, 0.02],
+    labelSide: "right",
+    description: "Hormones, neurotransmitters, and stress response — controlled by your brain",
+    lowScoreMeaning: "Hormone levels may be affecting mood, energy, sleep, or stress response",
+  },
+  {
     systemId: "lipids",
     organName: "Heart",
     models: ["/models/heart.glb"],
@@ -184,7 +193,7 @@ function OrganLabel({
   const st = STATUS_TW[system.overallStatus];
 
   return (
-    <Html position={config.labelPosition} center style={{ pointerEvents: "auto" }}>
+    <Html position={config.labelPosition} center zIndexRange={[50, 0]} style={{ pointerEvents: "auto" }}>
       <button
         onClick={(e) => { e.stopPropagation(); onClick(); }}
         className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border transition-all whitespace-nowrap ${
@@ -246,10 +255,10 @@ function Scene({
 
   return (
     <>
-      <ambientLight intensity={0.4} />
-      <directionalLight position={[2, 3, 5]} intensity={0.6} />
-      <directionalLight position={[-2, 1, -3]} intensity={0.3} color="#4488ff" />
-      <pointLight position={[0, 0.5, 0.3]} intensity={0.3} />
+      <ambientLight intensity={0.7} />
+      <directionalLight position={[2, 3, 5]} intensity={0.9} />
+      <directionalLight position={[-2, 1, -3]} intensity={0.4} color="#C2B0A5" />
+      <pointLight position={[0, 0.5, 0.3]} intensity={0.5} />
 
       <SkinShell />
 
@@ -263,7 +272,7 @@ function Scene({
             isSelected={false}
             opacity={0.15}
           />
-          <Html position={organ.position as [number, number, number]} center style={{ pointerEvents: "none" }}>
+          <Html position={organ.position as [number, number, number]} center zIndexRange={[50, 0]} style={{ pointerEvents: "none" }}>
             <span className="text-[9px] text-muted-foreground/40 whitespace-nowrap">{organ.label}</span>
           </Html>
         </group>
@@ -354,8 +363,8 @@ export default function Body3D({ systems, onSystemSelect }: Body3DProps) {
 
   return (
     <div className="space-y-4">
-      <div className="relative rounded-2xl overflow-hidden border border-white/[0.04] bg-[#060a14]">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(30,60,120,0.12)_0%,transparent_70%)]" />
+      <div className="relative rounded-2xl overflow-hidden border border-black/[0.06] bg-tenx-charcoal">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(194,176,165,0.15)_0%,transparent_70%)]" />
 
         <div className="relative" style={{ height: 580 }}>
           <Suspense fallback={<LoadingIndicator />}>
@@ -371,7 +380,7 @@ export default function Body3D({ systems, onSystemSelect }: Body3DProps) {
         </div>
 
         <div className="absolute bottom-3 left-0 right-0 text-center">
-          <span className="text-[10px] text-muted-foreground/40">
+          <span className="text-[10px] text-white/40">
             Drag to rotate &middot; Scroll to zoom &middot; Click organs to inspect
           </span>
         </div>
